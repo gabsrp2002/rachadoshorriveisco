@@ -1,0 +1,74 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  username      String?  @unique
+  email         String?  @unique
+  role          String   @default("player")
+  permissions   String   @default("[]")
+  password_hash String?
+  password_salt String?
+  created_at    DateTime @default(now())
+
+  @@map("users")
+}
+
+model Player {
+  id         String   @id @default(uuid())
+  name       String
+  nickname   String?
+  position   String   @default("line")
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+
+  stats MatchPlayerStat[]
+
+  @@index([is_active])
+  @@map("players")
+}
+
+model Match {
+  id          String   @id @default(uuid())
+  match_date  DateTime
+  location    String?
+  notes       String?
+  status      String   @default("scheduled")
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now()) @updatedAt
+
+  stats MatchPlayerStat[]
+
+  @@index([match_date])
+  @@map("matches")
+}
+
+model MatchPlayerStat {
+  id         String   @id @default(uuid())
+  match_id   String
+  player_id  String
+  team       String?
+  goals      Int      @default(0)
+  assists    Int      @default(0)
+  own_goals  Int      @default(0)
+  present    Boolean  @default(true)
+  created_at DateTime @default(now())
+
+  match  Match  @relation(fields: [match_id], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [player_id], references: [id], onDelete: Cascade)
+
+  @@unique([match_id, player_id])
+  @@index([player_id])
+  @@index([match_id])
+  @@map("match_player_stats")
+}

@@ -1,0 +1,93 @@
+# Semgrep Static Analysis Rules
+# Tailored to Next.js 16, React 19, TypeScript, and Prisma architecture rules.
+
+rules:
+  - id: single-api-dispatcher
+    message: >-
+      In Next.js 16, all API endpoints must be handled by the single catch-all dispatcher
+      (src/app/api/[[...slug]]/route.ts) with handlers in src/lib/api/handlers/.
+      Creating separate route.ts files inside src/app/api/ inflates serverless bundle size
+      and fragments request tracing.
+    severity: ERROR
+    languages: [generic]
+    paths:
+      include:
+        - "**/src/app/api/**/route.ts"
+      exclude:
+        - "**/src/app/api/*slug*/route.ts"
+        - "**/src/app/api/**/[*slug*]/**"
+    pattern: $ANY
+
+  - id: no-unbacked-polling
+    message: >-
+      Avoid fixed-interval polling with setInterval(). Use recursive setTimeout()
+      with exponential backoff or event-driven triggers (window focus / visibility change)
+      to prevent API hammering and battery drain.
+    severity: ERROR
+    languages: [typescript, javascript]
+    patterns:
+      - pattern: setInterval(...)
+    paths:
+      include:
+        - "**/src/**/*.ts"
+        - "**/src/**/*.tsx"
+      exclude:
+        - "**/src/**/__tests__/**"
+        - "**/src/**/*.test.*"
+
+  - id: no-client-side-auth-guard
+    message: >-
+      Never check auth or redirect to /login or /dashboard in client components to guard pages.
+      Route protection and RBAC are handled server-side in src/proxy.ts middleware.
+    severity: ERROR
+    languages: [typescript, javascript]
+    patterns:
+      - pattern-either:
+          - pattern: |
+              useEffect(() => {
+                ...
+                $ROUTER.push('/login');
+                ...
+              }, $DEPS)
+          - pattern: |
+              useEffect(() => {
+                ...
+                $ROUTER.push('/dashboard');
+                ...
+              }, $DEPS)
+    paths:
+      include:
+        - "**/src/app/**/*.tsx"
+      exclude:
+        - "**/src/app/login/**"
+        - "**/src/**/__tests__/**"
+
+  - id: prisma-singleton
+    message: >-
+      Do not instantiate PrismaClient directly. Use getPrismaClient() or prisma from
+      '@/lib/db/prisma' to ensure proper Cloudflare D1 adapter binding and connection lifecycle.
+    severity: ERROR
+    languages: [typescript, javascript]
+    patterns:
+      - pattern: new PrismaClient(...)
+    paths:
+      include:
+        - "**/src/**/*.ts"
+        - "**/src/**/*.tsx"
+      exclude:
+        - "**/src/lib/db/prisma.ts"
+        - "**/src/**/__tests__/**"
+
+  - id: prisma-raw-sql-concat
+    message: >-
+      Avoid raw SQL string concatenation in Prisma queries to prevent SQL injection.
+      Use parameterized queries with Prisma.sql / $queryRaw instead of string interpolation
+      in $queryRawUnsafe or $executeRawUnsafe.
+    severity: ERROR
+    languages: [typescript, javascript]
+    patterns:
+      - pattern-either:
+          - pattern: $PRISMA.$queryRawUnsafe($X + $Y, ...)
+          - pattern: $PRISMA.$executeRawUnsafe($X + $Y, ...)
+          - pattern: $PRISMA.$queryRawUnsafe(`...${...}...`, ...)
+          - pattern: $PRISMA.$executeRawUnsafe(`...${...}...`, ...)
