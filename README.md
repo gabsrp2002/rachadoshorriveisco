@@ -133,21 +133,21 @@ pnpm preview
 
 ## Cloudflare Deployment
 
-1. **Create the Cloudflare D1 Database** (first time only):
+When connecting the GitHub repository to **Cloudflare Workers Builds** (automatic deployments on `git push`):
+
+1. **Create the Cloudflare D1 Database** (first time only, via Cloudflare Dashboard or CLI):
    ```bash
    pnpm wrangler d1 create rachadoshorriveis-db
    ```
    Copy the returned `database_id` into `wrangler.jsonc` under `d1_databases[0].database_id`.
 
-2. **Apply Database Migrations to Remote D1**:
-   ```bash
-   pnpm db:migrate:remote
-   ```
+2. **Configure Cloudflare Build Settings** (in Cloudflare Dashboard → Workers & Pages → Settings → Builds):
+   - **Build command:** `pnpm run cf:build`
+   - **Deploy command:** `pnpm run db:migrate:remote && npx wrangler deploy`
+   *(Or simply run `pnpm run deploy`, which builds, applies pending remote D1 migrations, and deploys the Worker).*
 
-3. **Build and Deploy to Cloudflare Workers**:
-   ```bash
-   pnpm deploy
-   ```
+3. **Configure Production Secret** (in Cloudflare Dashboard → Settings → Variables and Secrets):
+   - Add `SESSION_SECRET` (a random 32+ character string) as an encrypted secret for the Worker runtime.
 
 ---
 
