@@ -15,7 +15,7 @@
     "test": "vitest run",
     "db:migrate": "export DATABASE_URL=\"${DATABASE_URL:-file:./data/racha.db}\" && prisma migrate dev",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
-    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "db:migrate:remote": "CI=true wrangler d1 migrations apply DB --remote",
     "db:push": "export DATABASE_URL=\"${DATABASE_URL:-file:./data/racha.db}\" && prisma db push",
     "studio": "export DATABASE_URL=\"${DATABASE_URL:-file:./data/racha.db}\" && prisma studio",
     "postinstall": "prisma generate",

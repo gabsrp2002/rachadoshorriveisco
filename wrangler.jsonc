@@ -12,8 +12,9 @@
     {
       "binding": "DB",
       "database_name": "rachadoshorriveis-db",
-      "database_id": "00000000-0000-0000-0000-000000000000",
-      "migrations_dir": "prisma/migrations"
+      "database_id": "392ddd3d-88f2-417b-af47-3de5ee95ad6b",
+      "migrations_dir": "prisma/migrations",
+      "migrations_pattern": "prisma/migrations/*/migration.sql"
     }
   ]
 }
